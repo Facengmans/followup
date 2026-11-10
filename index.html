@@ -69,20 +69,20 @@ function dept(){
  $("#out").onclick=()=>{TOKEN=null;S={};login()};
  $("#days").onclick=e=>{const c=e.target.closest(".chip");if(!c)return;document.querySelectorAll("#days .chip").forEach(x=>x.classList.remove("on"));c.classList.add("on");selD=c.dataset.v};
  const draw=()=>{const keep={};document.querySelectorAll(".p").forEach(p=>keep[p.dataset.i]=[...p.querySelectorAll("input,select,textarea")].map(x=>x.value));
-  $("#pc").innerHTML=[...selP].sort().map(i=>`<div class="p" data-i="${i}"><b>الفترة ${PER[i]}</b><div class="row"><div><label>عضو هيئة التدريس</label><input></div><div><label>المكان</label><input></div></div>
+  $("#pc").innerHTML=[...selP].sort().map(i=>`<div class="p" data-i="${i}"><b>الفترة ${PER[i]}</b><div class="row"><div><label>عضو هيئة التدريس / عضو هيئة معاونة</label><input></div><div><label>المكان</label><input></div></div>
   <label>الحالة</label><select>${["ok","bad","excuse","other"].map(k=>`<option value="${k}">${ST[k][0]}</option>`).join("")}</select><label>المشاكل المتاحة / ملاحظات</label><textarea></textarea></div>`).join("");
   document.querySelectorAll(".p").forEach(p=>{const k=keep[p.dataset.i];if(k)[...p.querySelectorAll("input,select,textarea")].forEach((x,j)=>x.value=k[j])})};
  $("#pers").onclick=e=>{const c=e.target.closest(".chip");if(!c)return;c.classList.toggle("on");const v=c.dataset.v;selP.has(v)?selP.delete(v):selP.add(v);draw()};
  $("#sub").onclick=async()=>{
   if(!selD||!selP.size||!$("#dt").value){$("#m").innerHTML=msg("اختر التاريخ واليوم وفترة واحدة على الأقل");return}
   const entries=[...document.querySelectorAll(".p")].map(p=>{const[a,b,s,n]=[...p.querySelectorAll("input,select,textarea")].map(x=>x.value.trim());return{p:+p.dataset.i,member:a,place:b,status:s,notes:n}});
-  if(entries.some(x=>!x.member)){$("#m").innerHTML=msg("اكتب اسم عضو هيئة التدريس لكل فترة");return}
+  if(entries.some(x=>!x.member)){$("#m").innerHTML=msg("اكتب اسم عضو هيئة التدريس / عضو هيئة معاونة لكل فترة");return}
   $("#sub").disabled=true;
   try{await api("add_report",{day:selD,date:$("#dt").value,entries,corrective:$("#cor").value.trim()});
    $("#m").innerHTML=msg("✓ تم إرسال التقرير بنجاح","ok");selP.clear();selD=null;setTimeout(dept,1200)}
   catch(e){$("#sub").disabled=false;$("#m").innerHTML=msg("تعذر الإرسال، حاول مرة أخرى")}}}
 /* ---------- general supervisor ---------- */
-const rows=r=>r.flatMap(x=>(x.entries||[]).map(e=>({"_id":x.id,"_p":e.p,"القسم":x.deptName,"التاريخ":x.date,"اليوم":x.day,"الفترة":PER[e.p],"عضو هيئة التدريس":e.member,"المكان":e.place,"الحالة":ST[e.status]?.[0]||"","المشاكل / الملاحظات":e.notes,"الإجراءات التصحيحية":x.corrective})));
+const rows=r=>r.flatMap(x=>(x.entries||[]).map(e=>({"_id":x.id,"_p":e.p,"القسم":x.deptName,"التاريخ":x.date,"اليوم":x.day,"الفترة":PER[e.p],"عضو هيئة التدريس / عضو هيئة معاونة":e.member,"المكان":e.place,"الحالة":ST[e.status]?.[0]||"","المشاكل / الملاحظات":e.notes,"الإجراءات التصحيحية":x.corrective})));
 function admin(){
  app.innerHTML=`<div class="bar"><h2 style="margin:0">⭐ لوحة المشرف العام</h2><button class="s" id="out">خروج</button></div>
  <div class="bar"><div class="chips" id="tabs"><span class="chip on" data-t="r">التقارير</span><span class="chip" data-t="p">كلمات المرور</span></div></div><div id="body"></div>`;
