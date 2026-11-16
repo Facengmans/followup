@@ -30,10 +30,11 @@ button.s{background:var(--bg);color:var(--tx);border:1px solid var(--bd)}button.
 .err{color:var(--bad);font-weight:700}.ok{color:var(--ok);font-weight:700}
 #pa{display:none}@media print{body>*:not(#pa){display:none!important}#pa{display:block;color:#000;background:#fff}th{background:#ddd!important;color:#000!important}}
 </style></head><body>
-<header><h1>🎓 نظام متابعة العملية التعليمية</h1><small>كلية الهندسة — متابعة الأقسام والبرامج</small></header>
+<header><h1>🎓 نظام متابعة العملية التعليمية</h1><small>كلية الهندسة — متابعة الأقسام والبرامج · v3</small></header>
 <main id="app"></main><div id="pa"></div>
 <script>
 const DEPTS=["قسم الرياضيات والفيزياء الهندسية","قسم الهندسة الكهربية","قسم هندسة الحاسبات والنظم","قسم هندسة الري والهيدروليكا","قسم هندسة الإلكترونيات والاتصالات","قسم هندسة الغزل والنسيج","قسم الهندسة الإنشائية","قسم هندسة الأشغال العامة","قسم الهندسة المعمارية","قسم هندسة الإنتاج والتصميم الميكانيكي","قسم هندسة القوى الميكانيكية","برنامج هندسة الميكاترونيكس","برنامج هندسة الاتصالات والحاسبات","برنامج الهندسة الطبية والحيوية","برنامج هندسة الذكاء الاصطناعي","برنامج هندسة الطاقة المتجددة والمستدامة","برنامج هندسة البناء والتشييد","برنامج هندسة العمارة المستدامة"];
+const LV=["الفرقة الإعدادية","الفرقة الأولى","الفرقة الثانية","الفرقة الثالثة","الفرقة الرابعة"];
 const DAYS=["السبت","الأحد","الاثنين","الثلاثاء","الأربعاء","الخميس"],PER=["الأولى","الثانية","الثالثة","الرابعة","الخامسة","السادسة"];
 const ST={ok:["ملتزم","var(--ok)"],bad:["غير ملتزم","var(--bad)"],excuse:["عذر","var(--warn)"],other:["أخرى","#6b7a99"],prob:["غير ملتزم","var(--bad)"],note:["أخرى","#6b7a99"]};
 const $=s=>document.querySelector(s),app=$("#app");
@@ -70,19 +71,20 @@ function dept(){
  $("#days").onclick=e=>{const c=e.target.closest(".chip");if(!c)return;document.querySelectorAll("#days .chip").forEach(x=>x.classList.remove("on"));c.classList.add("on");selD=c.dataset.v};
  const draw=()=>{const keep={};document.querySelectorAll(".p").forEach(p=>keep[p.dataset.i]=[...p.querySelectorAll("input,select,textarea")].map(x=>x.value));
   $("#pc").innerHTML=[...selP].sort().map(i=>`<div class="p" data-i="${i}"><b>الفترة ${PER[i]}</b><div class="row"><div><label>عضو هيئة التدريس / عضو هيئة معاونة</label><input></div><div><label>المكان</label><input></div></div>
-  <label>الحالة</label><select>${["ok","bad","excuse","other"].map(k=>`<option value="${k}">${ST[k][0]}</option>`).join("")}</select><label>المشاكل المتاحة / ملاحظات</label><textarea></textarea></div>`).join("");
+  <label>الفرقة الدراسية</label><select><option value="">اختر الفرقة</option>${LV.map(x=>`<option>${x}</option>`).join("")}</select><label>الحالة</label><select>${["ok","bad","excuse","other"].map(k=>`<option value="${k}">${ST[k][0]}</option>`).join("")}</select><label>المشاكل المتاحة / ملاحظات</label><textarea></textarea></div>`).join("");
   document.querySelectorAll(".p").forEach(p=>{const k=keep[p.dataset.i];if(k)[...p.querySelectorAll("input,select,textarea")].forEach((x,j)=>x.value=k[j])})};
  $("#pers").onclick=e=>{const c=e.target.closest(".chip");if(!c)return;c.classList.toggle("on");const v=c.dataset.v;selP.has(v)?selP.delete(v):selP.add(v);draw()};
  $("#sub").onclick=async()=>{
   if(!selD||!selP.size||!$("#dt").value){$("#m").innerHTML=msg("اختر التاريخ واليوم وفترة واحدة على الأقل");return}
-  const entries=[...document.querySelectorAll(".p")].map(p=>{const[a,b,s,n]=[...p.querySelectorAll("input,select,textarea")].map(x=>x.value.trim());return{p:+p.dataset.i,member:a,place:b,status:s,notes:n}});
+  const entries=[...document.querySelectorAll(".p")].map(p=>{const[a,b,lv,s,n]=[...p.querySelectorAll("input,select,textarea")].map(x=>x.value.trim());return{p:+p.dataset.i,member:a,place:b,level:lv,status:s,notes:n}});
   if(entries.some(x=>!x.member)){$("#m").innerHTML=msg("اكتب اسم عضو هيئة التدريس / عضو هيئة معاونة لكل فترة");return}
+  if(entries.some(x=>!x.level)){$("#m").innerHTML=msg("اختر الفرقة الدراسية لكل فترة");return}
   $("#sub").disabled=true;
   try{await api("add_report",{day:selD,date:$("#dt").value,entries,corrective:$("#cor").value.trim()});
    $("#m").innerHTML=msg("✓ تم إرسال التقرير بنجاح","ok");selP.clear();selD=null;setTimeout(dept,1200)}
   catch(e){$("#sub").disabled=false;$("#m").innerHTML=msg("تعذر الإرسال، حاول مرة أخرى")}}}
 /* ---------- general supervisor ---------- */
-const rows=r=>r.flatMap(x=>(x.entries||[]).map(e=>({"_id":x.id,"_p":e.p,"القسم":x.deptName,"التاريخ":x.date,"اليوم":x.day,"الفترة":PER[e.p],"عضو هيئة التدريس / عضو هيئة معاونة":e.member,"المكان":e.place,"الحالة":ST[e.status]?.[0]||"","المشاكل / الملاحظات":e.notes,"الإجراءات التصحيحية":x.corrective})));
+const rows=r=>r.flatMap(x=>(x.entries||[]).map(e=>({"_id":x.id,"_p":e.p,"القسم":x.deptName,"التاريخ":x.date,"اليوم":x.day,"الفترة":PER[e.p],"عضو هيئة التدريس / عضو هيئة معاونة":e.member,"المكان":e.place,"الفرقة":e.level||"","الحالة":ST[e.status]?.[0]||"","المشاكل / الملاحظات":e.notes,"الإجراءات التصحيحية":x.corrective})));
 function admin(){
  app.innerHTML=`<div class="bar"><h2 style="margin:0">⭐ لوحة المشرف العام</h2><button class="s" id="out">خروج</button></div>
  <div class="bar"><div class="chips" id="tabs"><span class="chip on" data-t="r">التقارير</span><span class="chip" data-t="p">كلمات المرور</span></div></div><div id="body"></div>`;
@@ -100,7 +102,7 @@ function repView(){
  <div class="chips"><button id="xl">⬇ Excel</button><button id="pdf" class="s">⬇ PDF / طباعة</button></div></div>
  <div class="card tw"><table id="tbl"></table></div>`;
  ["fd","fy","f1","f2"].forEach(i=>$("#"+i).onchange=fill);
- $("#xl").onclick=()=>{const ws=XLSX.utils.json_to_sheet(rows(cur()).map(({_id,_p,...o})=>o));ws["!cols"]=Array(9).fill({wch:22});const wb=XLSX.utils.book_new();wb.Workbook={Views:[{RTL:true}]};XLSX.utils.book_append_sheet(wb,ws,"التقارير");XLSX.writeFile(wb,"تقارير-المتابعة.xlsx")};
+ $("#xl").onclick=()=>{const ws=XLSX.utils.json_to_sheet(rows(cur()).map(({_id,_p,...o})=>o));ws["!cols"]=Array(10).fill({wch:22});const wb=XLSX.utils.book_new();wb.Workbook={Views:[{RTL:true}]};XLSX.utils.book_append_sheet(wb,ws,"التقارير");XLSX.writeFile(wb,"تقارير-المتابعة.xlsx")};
  $("#pdf").onclick=()=>{$("#pa").innerHTML=`<h2 dir="rtl">تقرير متابعة العملية التعليمية</h2>`+tbl(cur());window.print()};
  fill()}
 const cur=()=>{const d=$("#fd").value,y=$("#fy").value,a=$("#f1").value,b=$("#f2").value;return reports.filter(r=>(!d||r.dept===d)&&(!y||r.day===y)&&(!a||r.date>=a)&&(!b||r.date<=b))};
